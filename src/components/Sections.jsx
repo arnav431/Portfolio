@@ -179,9 +179,6 @@ export function Contact() {
               <i className={icons[s.label]} />{s.label}
             </a>
           ))}
-          <a href={`mailto:${profile.email}`} className="contact-link" onClick={copy}>
-            <i className="fa-solid fa-at" />{copied ? 'Copied!' : 'Email'}
-          </a>
         </div>
       </Reveal>
     </section>
