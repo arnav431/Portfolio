@@ -1,0 +1,130 @@
+/* ===== Design upgrade layer (loads after main.css) ===== */
+html { scroll-padding-top: 5rem; }
+:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+
+/* Hero */
+.hero-name {
+  background: linear-gradient(180deg, #eafff4 5%, #00ff9f 125%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.glitch::before, .glitch::after { -webkit-text-fill-color: currentColor; }
+.hero-sub { letter-spacing: .03em; }
+@media (min-width: 901px) {
+  .hero-stats {
+    padding: 1.2rem 1.6rem; border: 1px solid var(--border);
+    background: rgba(10,21,32,.6); backdrop-filter: blur(6px);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  }
+}
+
+/* Photo: clipped frame with corner brackets instead of a plain circle */
+.photo::before {
+  content: ''; position: absolute; inset: -14px; pointer-events: none;
+  --b: linear-gradient(var(--acid), var(--acid));
+  background:
+    var(--b) top left / 22px 2px no-repeat, var(--b) top left / 2px 22px no-repeat,
+    var(--b) top right / 22px 2px no-repeat, var(--b) top right / 2px 22px no-repeat,
+    var(--b) bottom left / 22px 2px no-repeat, var(--b) bottom left / 2px 22px no-repeat,
+    var(--b) bottom right / 22px 2px no-repeat, var(--b) bottom right / 2px 22px no-repeat;
+}
+.photo-wrapper, .photo-wrapper img { border-radius: 0; }
+.photo-wrapper {
+  border-width: 2px; background: var(--panel);
+  clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%);
+}
+.photo-wrapper img { width: 100%; }
+.photo-fallback, .img-fallback {
+  display: grid; place-items: center; width: 100%; height: 100%;
+  font-family: 'Bebas Neue'; font-size: 4rem; color: var(--acid); letter-spacing: .06em;
+}
+.img-fallback { font-size: 1.1rem; }
+@media (max-width: 900px) { .photo-wrapper { width: 120px; height: 120px; } .photo-fallback { font-size: 2.4rem; } }
+@media (max-width: 640px) { .photo::before { inset: -6px; } .photo-fallback { font-size: 1.6rem; } }
+
+/* Nav underline */
+.nav-links a { position: relative; }
+.nav-links a::after {
+  content: ''; position: absolute; left: .8rem; right: .8rem; bottom: .15rem; height: 1px;
+  background: var(--acid); transform: scaleX(0); transform-origin: left; transition: transform .3s;
+}
+.nav-links a:hover::after, .nav-links a.active::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--acid); }
+
+/* Section headings get a notched accent rule */
+.section-title::after {
+  content: ''; display: block; width: 64px; height: 3px; margin-top: 1.2rem; background: var(--acid);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
+}
+.contact-inner .section-title::after, #contact .section-label + .contact-big::after { display: none; }
+
+/* Cards: depth + a line that draws across on hover */
+.skill-card, .project-card, .edu-card, .cert-card {
+  background: linear-gradient(160deg, #0d1c2a 0%, var(--panel) 55%);
+  box-shadow: inset 0 1px 0 rgba(0,255,159,.08);
+}
+.skill-card::after {
+  content: ''; position: absolute; left: 0; top: 0; height: 2px; width: 0; background: var(--acid);
+  transition: width .5s cubic-bezier(.16,1,.3,1);
+}
+.skill-card:hover::after { width: 100%; }
+.skill-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px;
+  margin-bottom: 1.2rem; border: 1px solid var(--border); background: rgba(0,255,159,.06);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+.skill-icon .material-symbols-outlined { font-size: 30px; }
+.tag { transition: border-color .2s, background .2s; }
+.tag:hover { border-color: var(--acid); background: rgba(0,255,159,.1); }
+
+/* Projects */
+.project-num { color: transparent; -webkit-text-stroke: 1px rgba(0,255,159,.28); }
+.project-card.featured {
+  background: radial-gradient(circle at 88% 30%, rgba(0,207,255,.09), transparent 55%), var(--panel);
+  border-color: rgba(0,255,159,.28);
+}
+.project-card:not(.featured) { display: flex; }
+.project-card:not(.featured) > div { display: flex; flex-direction: column; width: 100%; }
+.project-card:not(.featured) .project-link { margin-top: auto; }
+
+/* Certificates */
+.cert-icon img { width: 100%; height: 100%; object-fit: contain; }
+.certs-grid a { text-decoration: none; display: block; }
+.certs-grid .cert-card { height: 100%; }
+
+/* Experience: detail becomes a terminal window, sticky beside the timeline */
+.exp-outer > div:last-child { position: sticky; top: 6rem; align-self: start; }
+.exp-panel { background: var(--panel); border: 1px solid var(--border); padding: 1.4rem 1.8rem 1.8rem; position: relative; overflow: hidden; }
+.exp-panel::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--acid), transparent); animation: scanH 3s linear infinite;
+}
+.exp-panel .t-bar { align-items: center; margin-bottom: 1.4rem; }
+.exp-path { font-family: 'Share Tech Mono'; font-size: .65rem; color: var(--dim); margin-left: .6rem; letter-spacing: .06em; }
+.exp-detail.active { animation: fadeIn .4s; }
+.exp-item { cursor: pointer; opacity: .45; }
+.exp-item:hover { opacity: .8; }
+.exp-item.active { opacity: 1; }
+@media (max-width: 900px) { .exp-outer > div:last-child { position: static; } }
+
+/* Contact */
+.contact-mail {
+  display: inline-block; margin-top: 2.5rem; font-family: 'Share Tech Mono'; font-size: clamp(.85rem, 2.6vw, 1.25rem);
+  color: var(--acid); text-decoration: none; padding-bottom: .3rem; border-bottom: 1px dashed rgba(0,255,159,.4);
+  transition: border-color .2s, text-shadow .2s; word-break: break-all;
+}
+.contact-mail:hover { border-bottom-style: solid; text-shadow: 0 0 18px rgba(0,255,159,.6); }
+.contact-links { margin-top: 1.5rem; }
+
+/* ---- Hover fixes: featured cards were overriding the hover border/overlay ---- */
+.project-card.featured:hover { border-color: rgba(0,255,159,.5); }
+.edu-card.featured:hover { border-color: rgba(0,255,159,.45); }
+.edu-card.featured:hover::after { opacity: .85; }
+.project-card:hover, .edu-card:hover, .ach-card:hover {
+  box-shadow: inset 0 0 0 1px rgba(0,255,159,.18), inset 0 0 44px rgba(0,255,159,.06);
+}
+.edu-card.wide { grid-column: span 2; }
+@media (max-width: 900px) { .edu-card.wide { grid-column: span 1; } }
