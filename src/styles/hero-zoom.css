@@ -1,21 +1,19 @@
 /* ===== Scroll-driven hero: the frame shrinks, content fades, the photo grows until only it remains =====
    JS (Hero.jsx) writes --mx --my --r --e --g --cv --pl --pt --pw --ph on .hz-stage from scroll progress. */
 .hz-track { position: relative; z-index: 2; height: 285vh; height: 285svh; padding: 0; overflow: visible; }
-.hz-stage {
-  --mx: 0px; --my: 0px; --r: 0px; --e: 0; --g: 0; --cv: 1; --pl: 0px; --pt: 0px; --pw: 0px; --ph: 0px;
-  position: sticky; top: 0; height: 100vh; height: 100svh;
-}
+.hz-stage { position: sticky; top: 0; height: 100vh; height: 100svh; }
+/* The frame is always full-stage size; clip-path (set from JS) is what shrinks it, so nothing re-lays-out or re-wraps while scrolling. */
 .hz-frame {
-  position: absolute; inset: var(--my) var(--mx); border-radius: var(--r); overflow: hidden; contain: layout paint;
+  position: absolute; inset: 0; overflow: hidden; contain: layout paint; will-change: clip-path;
   background: radial-gradient(85% 75% at 28% 18%, rgba(0,255,159,.07), transparent 62%), var(--panel);
-  border: 1px solid rgba(0,255,159, calc(var(--e) * .66));   /* no outline while it fills the screen */
-  box-shadow: 0 0 calc(var(--e) * 70px) rgba(0,255,159, calc(var(--e) * .22)), 0 calc(var(--e) * 34px) calc(var(--e) * 90px) rgba(0,0,0, calc(var(--e) * .65));
 }
+.hz-rim { position: absolute; inset: 0; z-index: 4; border: 1px solid rgba(0,255,159,0); pointer-events: none; }   /* outline that follows the clip */
+.hz-halo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; opacity: 0; pointer-events: none; will-change: opacity;
+  background: radial-gradient(closest-side, rgba(0,255,159,.22), rgba(0,255,159,.08) 55%, transparent 78%); }
 /* everything that used to be the hero lives here, laid out exactly like the old #hero */
 .hz-content {
   position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; padding: 8rem 2.5rem 4rem;
-  transform-origin: 50% 0; opacity: var(--cv);
-  transform: translateY(calc((1 - var(--cv)) * -28px));
+  will-change: opacity, transform;
 }
 .hz-content > .hero-content, .hz-content > .hero-stats { zoom: var(--fit, 1); }
 .hz-content.hz-gone { visibility: hidden; }
@@ -23,7 +21,7 @@
 @media (max-width: 700px) { .hz-content { padding: 14rem 1rem 2rem; } .hz-track { height: 245vh; height: 245svh; } }
 
 /* photo: sized by scroll, brackets fade out as it takes over the frame */
-.hz-photo { position: absolute; z-index: 3; left: var(--pl); top: var(--pt); width: var(--pw); height: var(--ph); opacity: var(--cv); pointer-events: none; }
+.hz-photo { position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none; will-change: opacity; }   /* position/size/opacity set from JS */
 .hz-photo::before {
   content: ''; position: absolute; inset: -14px; pointer-events: none;
   --b: linear-gradient(var(--acid), var(--acid));
@@ -64,6 +62,6 @@
 @media (min-width: 701px) and (max-width: 900px) { .hz-content { justify-content: center; } }
 
 /* the bat is its own canvas layer: placed and zoomed by scroll */
-.hz-batcv { position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none; }
-.hz-glow { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--g);
+.hz-batcv { position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none; will-change: transform; }
+.hz-glow { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; will-change: opacity;
   background: radial-gradient(58% 58% at 50% 50%, rgba(0,255,159,.2), rgba(0,207,255,.06) 55%, transparent 78%); }
