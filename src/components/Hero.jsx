@@ -30,10 +30,12 @@ function SocialFab() {
 
 export default function Hero({ onCollapse }) {
   const batRef = useRef(null), track = useRef(null), stage = useRef(null), content = useRef(null), glitch = useRef(null);
+  const frameRef = useRef(null), rimRef = useRef(null), haloRef = useRef(null), glowRef = useRef(null), photoRef = useRef(null);
 
-  // Scroll-driven zoom-out: the frame shrinks, content fades, and the photo grows until only it remains.
+  // Scroll-driven zoom-out. Per-frame work is only clip-path / opacity / transform (no layout, no re-wrapping text).
   useEffect(() => {
-    const st = stage.current, tr = track.current, ct = content.current;
+    const st = stage.current, tr = track.current, ct = content.current, fr = frameRef.current, rim = rimRef.current,
+      halo = haloRef.current, glow = glowRef.current, ph = photoRef.current;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const lerp = (a, b, t) => a + (b - a) * t;
     const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -50,41 +52,44 @@ export default function Hero({ onCollapse }) {
         ctx.fillRect(x0, y0, Math.round(ox + (f[i] + 1 - BAT.X0) * sc) - x0, Math.round(oy + (f[i + 1] + 1 - BAT.Y0) * sc) - y0);
       }
     };
-    const placeBat = (scale, cx, cy) => { bs = scale; cv.style.left = cx - side / 2 + 'px'; cv.style.top = cy - side / 2 + 'px'; drawBat(); };
+    const placeBat = (scale, cx, cy) => { bs = scale; cv.style.transform = `translate(${(cx - side / 2).toFixed(1)}px, ${(cy - side / 2).toFixed(1)}px)`; drawBat(); };
     const frameAt = (t) => { const pct = (((t / 1000) % BAT.duration) / BAT.duration) * 100; let k = 0; BAT.frames.forEach((f, i) => { if (f.at <= pct) k = i; }); return k; };
     const loop = (t) => { const k = frameAt(t); if (k !== fi && inView) { fi = k; drawBat(); } rafBat = requestAnimationFrame(loop); };
-    let W, H, M0, S, PS, narrow, tablet, target = 0, cur = 0, raf = 0, collapsed = false;
+
+    let W, H, S, PS, narrow, tablet, trackTop = 0, dist = 1, target = 0, cur = 0, raf = 0, collapsed = false, covered = true;
+    window.__hzCovered = true;                                        // lets the background grid pause while the hero hides it
 
     const apply = (p) => {
-      const e = ease(p), g = ease(clamp((p - 0.28) / 0.72)), cv = clamp(1 - p / 0.42);
-      const mx = lerp(M0, (W - S) / 2, e), my = lerp(M0, (H - S) / 2, e), fw = W - 2 * mx, fh = H - 2 * my;
-      // photo box: starts at its place inside the hero, ends covering the whole frame
-      const right = tablet ? 24 : clamp(W * 0.06, 32, 160);
-      const startL = narrow ? 16 : fw - right - PS;
-      const startT = narrow ? 100 : tablet ? 88 : fh * 0.42 - PS / 2;
-      const set = (k, v) => st.style.setProperty(k, v);
-      set('--mx', mx + 'px'); set('--my', my + 'px'); set('--r', lerp(0, Math.min(48, S * 0.12), e) + 'px');
-      set('--e', e.toFixed(4)); set('--g', g.toFixed(4)); set('--cv', cv.toFixed(4));
-      set('--pl', startL + 'px'); set('--pt', startT + 'px'); set('--pw', PS + 'px'); set('--ph', PS + 'px');   // photo stays put and fades
-      // bat: starts where it always sat, then drifts to the centre of the frame while zooming in
+      const e = ease(p), g = ease(clamp((p - 0.28) / 0.72)), cvis = clamp(1 - p / 0.42);
+      const mx = ((W - S) / 2) * e, my = ((H - S) / 2) * e, r = Math.min(48, S * 0.12) * e;
+      fr.style.clipPath = `inset(${my.toFixed(1)}px ${mx.toFixed(1)}px round ${r.toFixed(1)}px)`;   // the shrinking frame
+      rim.style.inset = `${my.toFixed(1)}px ${mx.toFixed(1)}px`; rim.style.borderRadius = r.toFixed(1) + 'px';
+      rim.style.borderColor = `rgba(0,255,159,${(e * 0.66).toFixed(3)})`;
+      halo.style.opacity = e.toFixed(3); glow.style.opacity = g.toFixed(3);
+      ct.style.opacity = ph.style.opacity = cvis.toFixed(3);
+      ct.style.transform = `translateY(${((1 - cvis) * -28).toFixed(1)}px)`;
+      ct.classList.toggle('hz-gone', cvis <= 0.02);
+      // bat: starts where it always sat, then drifts to the centre while zooming in
       const s0 = narrow ? 2.2 : tablet ? 3 : 4;
-      const scale = s0 * Math.pow(s1 / s0, g);
-      const c0x = narrow ? fw - 80 : tablet ? fw - 105 : fw * 0.56, c0y = narrow ? 176 : tablet ? 373 : fh * 0.7;
-      const bcx = lerp(c0x, fw / 2, g), bcy = lerp(c0y, fh / 2, g);
-      placeBat(scale, bcx, bcy);
-      ct.classList.toggle('hz-gone', cv <= 0.02);
+      const c0x = narrow ? W - 80 : tablet ? W - 105 : W * 0.56, c0y = narrow ? 176 : tablet ? 373 : H * 0.7;
+      placeBat(s0 * Math.pow(s1 / s0, g), lerp(c0x, W / 2, g), lerp(c0y, H / 2, g));
+      const cov = e < 0.02; if (cov !== covered) { covered = cov; window.__hzCovered = cov; }
       const c = p > 0.4;
       if (c !== collapsed) { collapsed = c; onCollapse(c); }   // nav logo appears once the title has faded
     };
-    const progress = () => clamp(-tr.getBoundingClientRect().top / ((tr.offsetHeight - H) * 0.86));
+    const progress = () => clamp((window.scrollY - trackTop) / dist);   // pure arithmetic: no layout read while scrolling
     const measure = () => {
       W = st.clientWidth; H = st.clientHeight; narrow = W < 700; tablet = W < 900;
-      M0 = 0;                                                                         // full-bleed at load
-      S = narrow ? Math.min(W * 0.8, H * 0.5) : Math.min(W * 0.5, H * 0.66);          // final photo square
-      PS = narrow ? 92 : tablet ? 140 : clamp(W * 0.21, 220, 360);                    // photo size at the start
+      S = narrow ? Math.min(W * 0.8, H * 0.5) : Math.min(W * 0.5, H * 0.66);          // final square
+      PS = narrow ? 92 : tablet ? 140 : clamp(W * 0.21, 220, 360);                    // photo size
       s1 = (S * 0.8) / Math.max(BAT.W, BAT.H);                                         // final bat zoom
       side = Math.ceil(Math.max(BAT.W, BAT.H) * s1) + 8;
       cv.width = cv.height = Math.round(side * dpr); cv.style.width = cv.style.height = side + 'px';
+      halo.style.width = halo.style.height = Math.round(S * 1.9) + 'px';
+      const right = tablet ? 24 : clamp(W * 0.06, 32, 160);                            // photo: fixed spot, fades with the text
+      ph.style.left = (narrow ? 16 : W - right - PS) + 'px'; ph.style.top = (narrow ? 100 : tablet ? 88 : H * 0.42 - PS / 2) + 'px';
+      ph.style.width = ph.style.height = PS + 'px';
+      trackTop = tr.getBoundingClientRect().top + window.scrollY; dist = (tr.offsetHeight - H) * 0.86;
       apply(0);
       // short screens: shrink only the text blocks (never the padding that keeps them clear of the photo)
       const cs = getComputedStyle(ct), hc = ct.querySelector('.hero-content');
@@ -107,7 +112,7 @@ export default function Hero({ onCollapse }) {
     addEventListener('scroll', onScroll, { passive: true });
     const ro = new ResizeObserver(() => { measure(); target = cur = progress(); apply(cur); });
     ro.observe(st);
-    return () => { removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(rafBat); };
+    return () => { removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(rafBat); window.__hzCovered = false; };
   }, [onCollapse]);
 
   // Replay the glitch animation every 7s.
@@ -121,7 +126,8 @@ export default function Hero({ onCollapse }) {
   return (
     <section className="hz-track" id="home" ref={track}>
       <div className="hz-stage" ref={stage}>
-        <div className="hz-frame">
+        <div className="hz-halo" ref={haloRef} />
+        <div className="hz-frame" ref={frameRef}>
           <div className="hero-grid" />
           <div className="hero-glow" />
           <div className="hero-glow2" />
@@ -142,14 +148,15 @@ export default function Hero({ onCollapse }) {
               </div>
             </div>
           </div>
-          <div className="hz-glow" />
+          <div className="hz-glow" ref={glowRef} />
           <canvas className="hz-batcv" ref={batRef} aria-hidden="true" />
-          <div className="hz-photo">
+          <div className="hz-photo" ref={photoRef}>
             <div className="hz-clip">
               <Img src="passport-photo.png" alt="Arnav Khajuria" fallback={<span className="photo-fallback">AK</span>} />
             </div>
           </div>
         </div>
+        <div className="hz-rim" ref={rimRef} />
       </div>
     </section>
   );
