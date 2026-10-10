@@ -41,7 +41,9 @@ export function GridCanvas() {
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
       ctx.strokeStyle = BASE + a + ')'; ctx.lineWidth = a > 0.08 ? 0.8 : 0.5; ctx.stroke();
     };
+    let frame = 0; const coarse = matchMedia('(pointer: coarse)').matches;
     const draw = () => {
+      if (window.__hzCovered || (coarse && (frame++ & 1))) { raf = requestAnimationFrame(draw); return; }   // hidden behind the hero / half-rate on phones
       ctx.clearRect(0, 0, W, H);
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
         const cell = cells[r][c], x = c * CELL, y = r * CELL;
